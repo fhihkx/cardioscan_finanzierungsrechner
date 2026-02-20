@@ -769,8 +769,11 @@
                 // Format Factor with comma (e.g. 2.29 -> 2,29)
                 const formatFactor = (f) => f ? f.toString().replace('.', ',') + ' %' : '- %';
 
+                // Format Price to always have 2 decimals
+                const formattedPrice = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
+
                 // Set HTML text values
-                document.getElementById('summary-price').innerText = priceStr + (priceStr.includes('€') ? '' : ' €');
+                document.getElementById('summary-price').innerText = formattedPrice + ' €';
                 document.getElementById('summary-duration').innerText = durationVal;
                 document.getElementById('summary-residual-euro').innerText = formatCurrency(residualEuro);
                 document.getElementById('summary-leasing-factor').innerText = formatFactor(factor);
@@ -821,93 +824,89 @@
             const datum = ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear();
             const stadt = "Hamburg";
 
-            // Get Calculator Values (Reine Zahlen extrahieren für die saubere Tabellenausrichtung)
+            // Get Calculator Values (Reine Zahlen extrahieren für saubere Ausrichtung)
             const preisVal = document.getElementById('summary-price').innerText.replace(/[^\d.,]/g, '').trim();
             const laufzeitVal = document.getElementById('summary-duration').innerText.replace(/[^\d.,]/g, '').trim();
             const restwertEuroVal = document.getElementById('summary-residual-euro').innerText.replace(/[^\d.,]/g, '').trim();
             const leasingfaktorVal = document.getElementById('summary-leasing-factor').innerText.replace(/[^\d.,]/g, '').trim();
             const rateVal = document.getElementById('summary-rate').innerText.replace(/[^\d.,]/g, '').trim();
 
-            // Specific Note based on Template logic
+            // Specific Note based on Template logic (Mietkauf bold)
             const extraHinweis = (art === "Leasing")
                 ? "Die oben genannten Preise verstehen sich netto, zuzüglich der gesetzlichen Mehrwertsteuer."
-                : "Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.";
+                : "<strong>Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.</strong>";
 
-            // HTML-String für das PDF aufbauen mit expliziter fester Breite! (Löst das Problem mit dem abgeschnittenen Layout)
+            // HTML-String für das PDF aufbauen
+            // WICHTIG: height: 257mm erzwingt die exakte Höhe abzüglich Ränder (297mm A4 - 40mm Ränder = 257mm).
+            // So sitzt der footer immer passgenau unten auf der PDF-Seite.
             const htmlContent = `
-                <div style="width: 700px; font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; background: #fff; padding: 10px;">
+                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 100%; height: 257mm; position: relative; box-sizing: border-box;">
                     
-                    <!-- Header -->
-                    <div style="text-align: right; margin-bottom: 40px;">
+                    <!-- Header mit Logo (oben rechts) -->
+                    <div style="text-align: right; margin-bottom: 15mm;">
                         <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgNTAiIGZpbGw9Im5vbmUiPjx0ZXh0IHk9IjM1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMmM2MmYyIiBsZXR0ZXItc3BhY2luZz0iLTIiPmNhcmRpb3NjYW48L3RleHQ+PHBhdGggZD0iTTE4MCAxNUwxNjUgMzBMMTU1IDIwIiBzdHJva2U9IiMyYzYyZjIiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+" style="height: 35px; object-fit: contain;" alt="cardioscan Logo">
                     </div>
                     
-                    <!-- Address & Date -->
-                    <table style="width: 100%; border: none; margin-bottom: 40px; border-collapse: collapse;">
-                        <tr>
-                            <td style="vertical-align: top; border: none; font-size: 11pt; padding: 0; width: 60%; line-height: 1.5;">
-                                ${firma}<br>
-                                ${anrede} ${vorname} ${nachname}<br>
-                                ${strasse}<br>
-                                ${plz} ${ort}
-                            </td>
-                            <td style="vertical-align: bottom; text-align: right; border: none; font-size: 11pt; padding: 0; width: 40%; line-height: 1.5;">
-                                ${stadt}, den ${datum}
-                            </td>
-                        </tr>
-                    </table>
+                    <!-- Address & Date (Ohne "den" um Platz für das Jahr zu machen) -->
+                    <div style="width: 100%; margin-bottom: 15mm; overflow: hidden;">
+                        <div style="float: left; width: 60%;">
+                            ${firma}<br>
+                            ${anrede} ${vorname} ${nachname}<br>
+                            ${strasse}<br>
+                            ${plz} ${ort}
+                        </div>
+                        <div style="float: right; width: 35%; text-align: right;">
+                            ${stadt}, ${datum}
+                        </div>
+                    </div>
                     
                     <!-- Subject -->
-                    <div style="font-weight: bold; margin-bottom: 20px; font-size: 11pt;">
+                    <div style="font-weight: bold; margin-bottom: 10mm; font-size: 11pt; clear: both;">
                         Finanzierungsangebot: ${art}
                     </div>
                     
                     <!-- Salutation -->
-                    <p style="margin-bottom: 15px;">${salutation}</p>
-                    <p style="margin-bottom: 30px;">vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:</p>
+                    <p style="margin-bottom: 5mm;">${salutation}</p>
+                    <p style="margin-bottom: 15mm;">vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:</p>
                     
-                    <!-- Values (Tabelle für exakte Ausrichtung wie in der Word-Vorlage) -->
-                    <table style="margin: 0 auto; width: 400px; border-collapse: collapse; font-size: 11pt;">
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left; width: 45%;">Anschaffungspreis:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">${preisVal}</td>
-                            <td style="padding: 4px 0 4px 5px; border: none; width: 50px;">€</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left;">Laufzeit:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">${laufzeitVal}</td>
-                            <td style="padding: 4px 0 4px 5px; border: none;">Monate</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left;">Mietsonderzahlung:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">0,00</td>
-                            <td style="padding: 4px 0 4px 5px; border: none;">€</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left;">Monatliche Rate:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">${rateVal}</td>
-                            <td style="padding: 4px 0 4px 5px; border: none;">€</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left;">Rate in %:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">${leasingfaktorVal}</td>
-                            <td style="padding: 4px 0 4px 5px; border: none;">%</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 4px 0; border: none; text-align: left;">kalk. Restwert:</td>
-                            <td style="padding: 4px 0; border: none; text-align: right; font-weight: bold;">${restwertEuroVal}</td>
-                            <td style="padding: 4px 0 4px 5px; border: none;">€</td>
-                        </tr>
-                    </table>
+                    <!-- Values (Zentriert mittels div und float ohne sichtbare Tabelle) -->
+                    <div style="margin: 10mm auto; width: 85mm;">
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">Anschaffungspreis:</div>
+                            <div style="float: right;"><strong>${preisVal}</strong> &nbsp;&nbsp;€</div>
+                        </div>
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">Laufzeit:</div>
+                            <div style="float: right;"><strong>${laufzeitVal}</strong> &nbsp;Monate</div>
+                        </div>
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">Mietsonderzahlung:</div>
+                            <div style="float: right;"><strong>0,00</strong> &nbsp;&nbsp;€</div>
+                        </div>
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">Monatliche Rate:</div>
+                            <div style="float: right;"><strong>${rateVal}</strong> &nbsp;&nbsp;€</div>
+                        </div>
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">Rate in %:</div>
+                            <div style="float: right;"><strong>${leasingfaktorVal}</strong> &nbsp;&nbsp;%</div>
+                        </div>
+                        <div style="clear: both; margin-bottom: 2mm;">
+                            <div style="float: left;">kalk. Restwert:</div>
+                            <div style="float: right;"><strong>${restwertEuroVal}</strong> &nbsp;&nbsp;€</div>
+                        </div>
+                        <div style="clear: both;"></div>
+                    </div>
 
-                    <p style="margin-top: 30px;">${extraHinweis}</p>
-                    <p style="margin-top: 25px; margin-bottom: 25px;">Wir freuen uns, für Sie tätig werden zu können und sichern Ihnen bereits jetzt eine faire, schnelle und unbürokratische Abwicklung zu.</p>
+                    <p style="margin-top: 15mm;">${extraHinweis}</p>
+                    <br>
+                    <p style="margin-bottom: 15mm;">Wir freuen uns, für Sie tätig werden zu können und sichern Ihnen bereits jetzt eine faire, schnelle und unbürokratische Abwicklung zu.</p>
                     
-                    <p style="margin-bottom: 10px;">Mit freundlichen Grüßen,</p>
+                    <p style="margin-bottom: 5mm;">Mit freundlichen Grüßen,</p>
                     <p><strong>cardioscan GmbH</strong></p>
 
-                    <!-- Footer -->
-                    <div style="margin-top: 80px; border-top: 1px solid #E6E9F0; padding-top: 15px; text-align: center; font-size: 8pt; color: #94A3B8;">
+                    <!-- Footer (Absolut positioniert, klebt genau 2cm über der physischen Blattunterkante) -->
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #E6E9F0; padding-top: 5mm; text-align: center; font-size: 8pt; color: #94A3B8;">
                         cardioscan GmbH • Valentinskamp 30 • 20355 Hamburg • www.cardioscan.de
                     </div>
                 </div>
@@ -919,14 +918,15 @@
 
             // HTML2PDF Options
             const opt = {
-                margin:       [20, 20, 20, 20], // 20mm margin an allen 4 Seiten
+                margin:       20, // 20mm margin (oben, unten, links, rechts = 2cm!)
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, windowWidth: 800 },
+                // WICHTIG: scrollY: 0 behebt das Problem mit der Scroll-Höhe auf der Webseite, durch die das PDF sonst leer bleibt.
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generate & Download direkt aus dem String (Löst das Clipping Problem)
+            // Generate & Download direkt aus dem HTML-String
             html2pdf().set(opt).from(htmlContent).save();
         }
     </script>
