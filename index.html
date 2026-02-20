@@ -14,6 +14,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
         (function() {
+       
             emailjs.init("y0ANsvoTYHNRXCf5R");
         })();
     </script>
@@ -395,14 +396,6 @@
                                         <label class="calc-label">Ort</label>
                                         <input type="text" id="form-ort" class="form-input" required>
                                     </div>
-                                </div>
-
-                                <!-- Neue Checkbox für Datenschutz (optional aber empfohlen bei E-Mail Versand) -->
-                                <div class="pt-2">
-                                    <label class="flex items-start gap-3 text-xs text-slate-500 cursor-pointer">
-                                        <input type="checkbox" required class="mt-0.5 border-gray-300 rounded text-cs-blue focus:ring-cs-blue">
-                                        <span>Ich stimme zu, dass meine Daten zur Erstellung des Angebots verarbeitet und eine Kopie an den cardioscan Vertrieb gesendet wird.</span>
-                                    </label>
                                 </div>
 
                                 <div class="pt-4">
@@ -846,10 +839,9 @@
                     restwert: restwertEuroVal
                 };
 
-                // 3. E-MAIL ABSENDEN (Du musst SERVICE_ID und TEMPLATE_ID noch anpassen)
-                // WICHTIG: Ersetze "DEINE_SERVICE_ID" und "DEINE_TEMPLATE_ID" mit deinen echten IDs von EmailJS
+
                 try {
-                    await emailjs.send("service_xyz123", "template_abc890", templateParams);
+                    await emailjs.send("service_lg831md", "template_raixaby", templateParams);
                     console.log("E-Mail Alert erfolgreich versendet.");
                     // Optional: Erfolgsmeldung für den User anzeigen
                 } catch (emailError) {
