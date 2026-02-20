@@ -771,15 +771,27 @@
                 ? "Die oben genannten Preise verstehen sich netto, zuzüglich der gesetzlichen Mehrwertsteuer."
                 : "<strong>Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.</strong>";
 
-            // 1. Variante: DIREKT das HTML an html2pdf übergeben, ohne DOM Manipulation.
-            // Der Container hat die festen Innenmaße eines A4 Blattes (170mm x 257mm).
-            // Dies verhindert jegliches Abschneiden, Leere Seiten oder Scroll-Glitches!
-            const htmlContent = `
-                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 170mm; height: 257mm; position: relative; box-sizing: border-box; background: #fff; margin: 0; padding: 0; overflow: hidden;">
+            // Absolute Absicherung gegen das Abschneiden durch die Render-Engine!
+            // Wir erstellen ein DOM Element mit den exakten physischen Abmessungen eines A4 Papiers.
+            // Padding simuliert dabei perfekt die 2cm Ränder (20mm). 
+            // Durch das Rendern ohne html2pdf margin wird jeglicher Zoom- und Abschneidefehler eliminiert.
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.position = 'absolute';
+            pdfContainer.style.top = '0';
+            pdfContainer.style.left = '0';
+            pdfContainer.style.width = '210mm'; 
+            pdfContainer.style.height = '297mm'; 
+            pdfContainer.style.padding = '20mm';
+            pdfContainer.style.boxSizing = 'border-box';
+            pdfContainer.style.backgroundColor = '#ffffff';
+            pdfContainer.style.zIndex = '-9999';
+
+            pdfContainer.innerHTML = `
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%; font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5;">
                     
                     <!-- Header mit Logo (rechtsbündig) -->
-                    <div style="text-align: right; margin-bottom: 12mm; height: 50px;">
-                        <img src="cardioscan_logo.png" style="height: 50px; max-width: 250px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
+                    <div style="text-align: right; margin-bottom: 12mm;">
+                        <img src="cardioscan_logo.png" style="height: 55px; max-width: 250px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
                     </div>
                     
                     <!-- Address & Date -->
@@ -805,7 +817,7 @@
                     <p style="margin-top: 0; margin-bottom: 12mm;">vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:</p>
                     
                     <!-- Values (Zentriert, kompakt & ohne Überschneidungen) -->
-                    <table style="margin: 0 auto; width: 75mm; border-collapse: collapse; font-size: 11pt;">
+                    <table style="margin: 0 auto; width: 85mm; border-collapse: collapse; font-size: 11pt;">
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Anschaffungspreis:</td>
                             <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${preisVal}</strong></td>
@@ -842,40 +854,36 @@
                     <p style="margin-top: 15mm; margin-bottom: 0;">${extraHinweis}</p>
                     <br>
                     <p style="margin-top: 0; margin-bottom: 12mm;">Wir freuen uns, für Sie tätig werden zu können und sichern Ihnen bereits jetzt eine faire, schnelle und unbürokratische Abwicklung zu.</p>
-                    
                     <p style="margin-top: 0; margin-bottom: 5mm;">Mit freundlichen Grüßen,</p>
                     <p style="margin-top: 0;"><strong>cardioscan GmbH</strong></p>
 
-                    <!-- Footer (Passgenau in exakt 2 Zeilen für die Banken, Rest 3 Zeilen, 1:1 wie Screenshot) -->
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; border-top: 1px solid #999; padding-top: 3mm;">
-                        <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.3; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
+                    <!-- Spacer der die Fußzeile perfekt nach unten drückt -->
+                    <div style="flex-grow: 1;"></div>
+
+                    <!-- Footer (Passgenau in 1:1 Kopie aus Screenshot) -->
+                    <div style="border-top: 1px solid #999; padding-top: 3mm; margin-top: 10mm;">
+                        <table style="width: 100%; font-size: 7pt; color: #333; line-height: 1.3; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
                             <tr>
                                 <td style="vertical-align: top; width: 18%; padding: 0;">
-                                    cardioscan GmbH<br>
-                                    Theodorstraße 41r<br>
-                                    22761 Hamburg
+                                    cardioscan GmbH<br>Theodorstraße 41r<br>22761 Hamburg
                                 </td>
-                                <td style="vertical-align: top; width: 27%; padding: 0;">
-                                    Geschäftsführer Dr. Marc Weitl<br>
-                                    Amtsgericht Hamburg HRB 117288<br>
-                                    Ust-IdNr. DE268167789
+                                <td style="vertical-align: top; width: 28%; padding: 0;">
+                                    Geschäftsführer Dr. Marc Weitl<br>Amtsgericht Hamburg HRB 117288<br>Ust-IdNr. DE268167789
                                 </td>
                                 <td style="vertical-align: top; width: 22%; padding: 0;">
-                                    Fon (+49) 40-303 723 30<br>
-                                    info@cardioscan.de<br>
-                                    www.cardioscan.de
+                                    Fon (+49) 40-303 723 30<br>info@cardioscan.de<br>www.cardioscan.de
                                 </td>
-                                <td style="vertical-align: top; width: 33%; padding: 0;">
-                                    <table style="width: 100%; border: none; border-collapse: collapse; font-size: 6.5pt;">
+                                <td style="vertical-align: top; width: 32%; padding: 0;">
+                                    <table style="width: 100%; border: none; border-collapse: collapse; font-size: 7pt;">
                                         <tr>
-                                            <td style="padding: 0 2mm 0 0;">Sydbank</td>
-                                            <td style="padding: 0 2mm 0 0;">IBAN DE55 2151 0600 1000 6859 59</td>
-                                            <td style="padding: 0;">SYBKDE22</td>
+                                            <td style="padding: 0 2mm 0 0; white-space: nowrap;">Sydbank</td>
+                                            <td style="padding: 0 2mm 0 0; white-space: nowrap;">IBAN DE55 2151 0600 1000 6859 59</td>
+                                            <td style="padding: 0; white-space: nowrap;">SYBKDE22</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0 2mm 0 0;">Commerzbank</td>
-                                            <td style="padding: 0 2mm 0 0;">IBAN DE33 2004 0000 0630 1527 00</td>
-                                            <td style="padding: 0;">COBADEFFXXX</td>
+                                            <td style="padding: 0 2mm 0 0; white-space: nowrap;">Commerzbank</td>
+                                            <td style="padding: 0 2mm 0 0; white-space: nowrap;">IBAN DE33 2004 0000 0630 1527 00</td>
+                                            <td style="padding: 0; white-space: nowrap;">COBADEFFXXX</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -885,22 +893,28 @@
                 </div>
             `;
 
+            document.body.appendChild(pdfContainer);
+
             // Setup PDF Download Name
             const firmaClean = firma.replace(/[^a-zA-Z0-9]/g, '_');
             const filename = `cardioscan_${art}_${firmaClean}.pdf`;
 
             // HTML2PDF Options 
             const opt = {
-                margin:       20, // Exakt 2cm Rand an allen Seiten
+                // margin: 0, da wir das margin durch das padding: 20mm im A4 Container absolut gesichert simulieren!
+                margin:       0, 
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                // windowWidth und scrollY entfernt! Lässt html2pdf automatisch den korrekten iframe berechnen.
-                html2canvas:  { scale: 2, useCORS: true },
+                // Absolute Koordinaten ab 0x0 garantieren, dass nicht die falschen Scroll-Werte verwendet werden
+                html2canvas:  { scale: 2, useCORS: true, x: 0, y: 0, scrollY: 0, scrollX: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generate & Download direkt aus dem HTML-String (Garantiert keine leeren Bilder oder Scroll-Glitches mehr)
-            html2pdf().set(opt).from(htmlContent).save();
+            // Generate & Download direkt aus dem eingefügten, strikt skalierten DOM-Element.
+            // Danach wird das temporäre Element wieder gelöscht.
+            html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                document.body.removeChild(pdfContainer);
+            });
         }
     </script>
 </body>
