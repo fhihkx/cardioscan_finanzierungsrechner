@@ -159,21 +159,6 @@
             background-color: #fff;
         }
 
-        /* Process Section Numbers */
-        .process-number {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            font-size: 160px;
-            line-height: 1;
-            color: rgba(255,255,255,0.03);
-            position: absolute;
-            top: -50px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
         /* Container Height Transition */
         #content-container {
             transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -198,7 +183,6 @@
         @media (max-width: 640px) {
             .tab-btn { padding: 16px 32px; font-size: 14px; width: 100%; }
             .tab-nav { border-radius: 12px; width: 100%; }
-            .process-number { font-size: 100px; top: -20px; }
         }
     </style>
 </head>
@@ -209,12 +193,11 @@
         <div class="max-w-[1400px] mx-auto px-6 md:px-8 h-24 flex items-center justify-between">
             <!-- Logo -->
             <a href="#" class="flex items-center gap-2 group shrink-0">
-                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-8 md:h-10 object-contain group-hover:opacity-80 transition-opacity">
+                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-12 md:h-16 object-contain group-hover:opacity-80 transition-opacity">
             </a>
 
             <!-- Actions -->
             <div class="flex items-center gap-6">
-                <!-- Startseite Link - hat nun die gleiche Klasse "nav-item" für einheitliche Optik -->
                 <a href="https://cardioscan.de" target="_blank" class="nav-item hidden md:block">Startseite</a>
                 
                 <a href="https://cardioscan.de/vertrieb-kontaktieren" target="_blank" class="bg-cs-blue text-white px-6 py-3 rounded-md text-sm font-bold uppercase tracking-wide hover:bg-blue-600 transition-colors shadow-md whitespace-nowrap">
@@ -243,7 +226,6 @@
             <div class="tab-nav">
                 <button onclick="switchTab('calculator')" id="tab-calculator" class="tab-btn active">Rechner</button>
                 <button onclick="switchTab('why')" id="tab-why" class="tab-btn">Ihre Vorteile</button>
-                <button onclick="switchTab('process')" id="tab-process" class="tab-btn">Ablauf</button>
             </div>
         </div>
 
@@ -269,6 +251,7 @@
                                     <label class="calc-label">Anschaffungspreis (Netto)</label>
                                     <div class="calc-input-wrapper">
                                         <span class="text-gray-400 font-bold mr-4 text-xl">€</span>
+                                        <!-- inputmode="decimal" ist ideal für iOS/Android Touch-Tastaturen -->
                                         <input type="text" id="price" class="calc-input" placeholder="0,00" inputmode="decimal" oninput="formatPriceInput(this)">
                                     </div>
                                 </div>
@@ -301,7 +284,7 @@
                                                 <option value="15">15 %</option>
                                             </select>
                                             <div class="absolute right-5 text-cs-blue pointer-events-none">
-                                                <i class="fa-solid fa-percent text-sm"></i>
+                                                <i class="fa-solid fa-chevron-down text-sm"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -341,7 +324,7 @@
                                     
                                     <!-- Disclaimer Text -->
                                     <div class="text-[11px] text-white/30 leading-relaxed max-w-sm mt-28">
-                                        *Alle Preise zzgl. gesetzlicher MwSt. Vorbehaltlich positiver Bonitätsprüfung durch unsere Finanzierungspartner.
+                                        *Alle Preise zzgl. gesetzlicher MwSt. vorbehaltlich positiver Bonitätsprüfung durch unsere Finanzierungspartner.
                                     </div>
                                 </div>
 
@@ -372,7 +355,8 @@
                                     <label class="calc-label">Finanzierungsart</label>
                                     <div class="relative">
                                         <select id="form-finanzierungsart" class="form-input appearance-none cursor-pointer pr-8" required>
-                                            <option value="Leasing" selected>Leasing</option>
+                                            <option value="" disabled selected>Wählen</option>
+                                            <option value="Leasing">Leasing</option>
                                             <option value="Mietkauf">Mietkauf</option>
                                         </select>
                                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-cs-blue pointer-events-none">
@@ -529,61 +513,6 @@
                 </div>
             </div>
 
-            <!-- VIEW 3: PROCESS (Dark Theme) -->
-            <div id="view-process" class="view-content absolute inset-x-0 top-0 w-full opacity-0 pointer-events-none transition-all duration-300">
-                <div class="bg-cs-navy rounded-xl shadow-card p-8 md:p-16 lg:p-24 relative overflow-hidden flex flex-col justify-center items-center text-center">
-                    
-                    <!-- Background Deco -->
-                    <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-cs-blue opacity-10 rounded-full blur-[120px] transform translate-x-1/3 -translate-y-1/3"></div>
-                    <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-400 opacity-5 rounded-full blur-[80px]"></div>
-
-                    <div class="relative z-10 w-full max-w-6xl">
-                        <h2 class="text-3xl md:text-5xl font-bold text-white mb-24 font-heading">Der Weg zu Ihrem System</h2>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-12">
-                            <!-- Step 1 -->
-                            <div class="relative group overflow-hidden md:overflow-visible p-4">
-                                <div class="process-number group-hover:text-white/10 transition-colors">01</div>
-                                <div class="relative z-10 pt-16">
-                                    <h4 class="text-3xl font-bold text-cs-blue mb-5">Anfrage</h4>
-                                    <p class="text-gray-400 text-base leading-relaxed max-w-[300px] mx-auto">
-                                        Sie konfigurieren Ihr Wunschsystem im Rechner und senden uns die Anfrage.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Step 2 -->
-                            <div class="relative group overflow-hidden md:overflow-visible p-4">
-                                <div class="process-number group-hover:text-white/10 transition-colors">02</div>
-                                <div class="relative z-10 pt-16">
-                                    <h4 class="text-3xl font-bold text-cs-blue mb-5">Angebot</h4>
-                                    <p class="text-gray-400 text-base leading-relaxed max-w-[300px] mx-auto">
-                                        Wir prüfen die Bonität und erstellen den passenden Finanzierungsvertrag.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Step 3 -->
-                            <div class="relative group overflow-hidden md:overflow-visible p-4">
-                                <div class="process-number group-hover:text-white/10 transition-colors">03</div>
-                                <div class="relative z-10 pt-16">
-                                    <h4 class="text-3xl font-bold text-cs-blue mb-5">Start</h4>
-                                    <p class="text-gray-400 text-base leading-relaxed max-w-[300px] mx-auto">
-                                        Lieferung, Einweisung und sofortiger Start mit Ihrem neuen System.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-24">
-                            <a href="https://cardioscan.de/vertrieb-kontaktieren" target="_blank" class="inline-block bg-white text-cs-navy hover:bg-cs-blue hover:text-white px-12 py-5 rounded-lg font-bold text-sm transition-all shadow-lg hover:shadow-glow transform hover:-translate-y-1">
-                                Jetzt Angebot anfordern
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </main>
 
@@ -593,7 +522,7 @@
             
             <!-- Left: Logo -->
             <a href="https://cardioscan.de" target="_blank" class="flex items-center gap-2 group">
-                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-8 md:h-10 object-contain group-hover:opacity-80 transition-opacity">
+                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-10 md:h-14 object-contain group-hover:opacity-80 transition-opacity">
             </a>
 
             <!-- Right: Links & Flag -->
@@ -667,15 +596,23 @@
         }
 
         function formatPriceInput(input) {
-            let val = input.value;
+            // Aktuellen Wert holen und alle Punkte (Tausendertrenner) entfernen,
+            // damit sie nicht fälschlicherweise in Kommas umgewandelt werden.
+            let val = input.value.replace(/\./g, '');
+            
+            // Alles außer Ziffern und Komma entfernen
             val = val.replace(/[^\d,]/g, '');
+            
+            // Verhindern, dass mehr als ein Komma eingegeben wird
             let parts = val.split(',');
             if (parts.length > 2) {
-                val = parts[0] + ',' + parts.slice(1).join('');
-                parts = val.split(',');
+                parts = [parts[0], parts.slice(1).join('')];
             }
-            let integerPart = parts[0];
-            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            // Tausendertrennzeichen hinzufügen
+            let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            // Wert wieder zusammensetzen (max. 2 Nachkommastellen)
             if (parts.length > 1) {
                 input.value = integerPart + ',' + parts[1].substring(0, 2); 
             } else {
@@ -844,7 +781,7 @@
                     
                     <!-- Header mit Logo (oben rechts) -->
                     <div style="text-align: right; margin-bottom: 15mm;">
-                        <img src="cardioscan_logo.png" style="height: 35px; object-fit: contain;" alt="cardioscan Logo">
+                        <img src="cardioscan_logo.png" style="height: 65px; max-width: 280px; object-fit: contain;" alt="cardioscan Logo">
                     </div>
                     
                     <!-- Address & Date (Ohne "den" um Platz für das Jahr zu machen) -->
