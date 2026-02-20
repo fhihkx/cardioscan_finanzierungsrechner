@@ -191,15 +191,10 @@
     <!-- HEADER -->
     <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all duration-300">
         <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
-            <!-- Logo mit Link zur Startseite (darunter) -->
-            <div class="flex flex-col items-start shrink-0">
-                <a href="https://cardioscan.de" target="_blank" class="group">
-                    <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-10 md:h-14 object-contain group-hover:opacity-80 transition-opacity">
-                </a>
-                <a href="https://cardioscan.de" target="_blank" class="text-[11px] font-semibold text-slate-400 hover:text-cs-blue mt-1 transition-colors">
-                    Zur Startseite
-                </a>
-            </div>
+            <!-- Logo -->
+            <a href="https://cardioscan.de" target="_blank" class="flex items-center group shrink-0">
+                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-12 md:h-16 lg:h-20 object-contain group-hover:opacity-80 transition-opacity">
+            </a>
 
             <!-- Actions -->
             <div class="flex items-center gap-6">
@@ -776,16 +771,30 @@
                 ? "Die oben genannten Preise verstehen sich netto, zuzüglich der gesetzlichen Mehrwertsteuer."
                 : "<strong>Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.</strong>";
 
-            // HTML-String für das PDF aufbauen
-            // WICHTIG: width: 170mm (DIN A4 210mm - 2*20mm margins) und height: 257mm (297mm - 2*20mm) erzwingt die exakten Abmessungen!
-            const htmlContent = `
-                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 170mm; height: 257mm; position: relative; box-sizing: border-box; background: #fff; margin: 0; padding: 0;">
+            // Um absolute Sicherheit gegen jegliches Abschneiden (Clipping) der Render-Engine zu gewährleisten,
+            // fügen wir das HTML-Dokument kurz in den DOM ein. Wir definieren EXAKTE mm-Angaben für ein A4 Blatt.
+            const pdfContainer = document.createElement('div');
+            
+            // 170mm Breite entspricht genau 210mm (A4) - 2x 20mm (Ränder links/rechts). 
+            // 257mm Höhe entspricht genau 297mm (A4) - 2x 20mm (Ränder oben/unten).
+            pdfContainer.style.position = 'absolute';
+            pdfContainer.style.top = '0';
+            pdfContainer.style.left = '0';
+            pdfContainer.style.width = '170mm'; 
+            pdfContainer.style.height = '257mm'; 
+            pdfContainer.style.padding = '0';
+            pdfContainer.style.margin = '0';
+            pdfContainer.style.backgroundColor = '#fff';
+            pdfContainer.style.zIndex = '-9999';
+
+            pdfContainer.innerHTML = `
+                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 100%; height: 100%; position: relative; box-sizing: border-box;">
                     
-                    <!-- Header mit Logo (rechtsbündig und durch Tabelle abgesichert gegen Clipping) -->
+                    <!-- Header mit Logo (rechtsbündig) -->
                     <table style="width: 100%; border: none; margin-bottom: 12mm; border-collapse: collapse;">
                         <tr>
                             <td style="text-align: right; padding: 0;">
-                                <img src="cardioscan_logo.png" style="height: 55px; max-width: 280px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
+                                <img src="cardioscan_logo.png" style="height: 55px; max-width: 250px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
                             </td>
                         </tr>
                     </table>
@@ -814,41 +823,39 @@
                     <p style="margin-top: 0; margin-bottom: 5mm;">${salutation}</p>
                     <p style="margin-top: 0; margin-bottom: 12mm;">vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:</p>
                     
-                    <!-- Values (Enger zusammengezogen durch verkleinertes Padding) -->
-                    <div style="margin: 0 auto; width: 85mm;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 11pt;">
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">Anschaffungspreis:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>${preisVal}</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">Laufzeit:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>${laufzeitVal}</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">Monate</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">Mietsonderzahlung:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>0,00</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">Monatliche Rate:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>${rateVal}</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">Rate in %:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>${leasingfaktorVal}</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">%</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 1.5mm 0; text-align: left;">kalk. Restwert:</td>
-                                <td style="padding: 1.5mm 0; text-align: right;"><strong>${restwertEuroVal}</strong></td>
-                                <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
-                            </tr>
-                        </table>
-                    </div>
+                    <!-- Values (Zentrierte Tabelle für exaktes Alignment der Zahlen und Währungen) -->
+                    <table style="margin: 0 auto; width: 85mm; border-collapse: collapse; font-size: 11pt;">
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">Anschaffungspreis:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${preisVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">Laufzeit:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${laufzeitVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">Monate</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">Mietsonderzahlung:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>0,00</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">Monatliche Rate:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${rateVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">Rate in %:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${leasingfaktorVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">%</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1.5mm 0; text-align: left;">kalk. Restwert:</td>
+                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${restwertEuroVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                        </tr>
+                    </table>
 
                     <!-- Note -->
                     <p style="margin-top: 15mm; margin-bottom: 0;">${extraHinweis}</p>
@@ -858,16 +865,16 @@
                     <p style="margin-top: 0; margin-bottom: 5mm;">Mit freundlichen Grüßen,</p>
                     <p style="margin-top: 0;"><strong>cardioscan GmbH</strong></p>
 
-                    <!-- Footer (Passgenau unten fixiert, Schriftart exakt auf 3 Zeilen abgestimmt) -->
-                    <div style="position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #999; padding-top: 3mm;">
-                        <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.4; border-collapse: collapse; border: none;">
+                    <!-- Footer (Passgenau unten fixiert, exakt 1:1 aufgebaut wie im Screenshot) -->
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; border-top: 1px solid #999; padding-top: 3mm;">
+                        <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.2; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
                             <tr>
-                                <td style="vertical-align: top; width: 20%; padding: 0;">
+                                <td style="vertical-align: top; width: 18%; padding: 0;">
                                     cardioscan GmbH<br>
                                     Theodorstraße 41r<br>
                                     22761 Hamburg
                                 </td>
-                                <td style="vertical-align: top; width: 28%; padding: 0;">
+                                <td style="vertical-align: top; width: 26%; padding: 0;">
                                     Geschäftsführer Dr. Marc Weitl<br>
                                     Amtsgericht Hamburg HRB 117288<br>
                                     Ust-IdNr. DE268167789
@@ -877,16 +884,16 @@
                                     info@cardioscan.de<br>
                                     www.cardioscan.de
                                 </td>
-                                <td style="vertical-align: top; width: 30%; padding: 0;">
-                                    <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.4; border-collapse: collapse; border: none;">
+                                <td style="vertical-align: top; width: 34%; padding: 0;">
+                                    <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.2; border-collapse: collapse; border: none;">
                                         <tr>
-                                            <td style="padding: 0 2mm 0 0;">Sydbank</td>
-                                            <td style="padding: 0 2mm 0 0;">IBAN DE55 2151 0600 1000 6859 59</td>
+                                            <td style="padding: 0 1.5mm 0 0;">Sydbank</td>
+                                            <td style="padding: 0 1.5mm 0 0;">IBAN DE55 2151 0600 1000 6859 59</td>
                                             <td style="padding: 0;">SYBKDE22</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0 2mm 0 0;">Commerzbank</td>
-                                            <td style="padding: 0 2mm 0 0;">IBAN DE33 2004 0000 0630 1527 00</td>
+                                            <td style="padding: 0 1.5mm 0 0;">Commerzbank</td>
+                                            <td style="padding: 0 1.5mm 0 0;">IBAN DE33 2004 0000 0630 1527 00</td>
                                             <td style="padding: 0;">COBADEFFXXX</td>
                                         </tr>
                                     </table>
@@ -897,21 +904,27 @@
                 </div>
             `;
 
+            document.body.appendChild(pdfContainer);
+
             // Setup PDF Download Name
             const firmaClean = firma.replace(/[^a-zA-Z0-9]/g, '_');
             const filename = `cardioscan_${art}_${firmaClean}.pdf`;
 
-            // HTML2PDF Options (WICHTIG: windowWidth: 1024 zwingt die Rendering-Engine eine feste Breite einzuhalten -> Nichts schneidet mehr ab!)
+            // HTML2PDF Options 
             const opt = {
                 margin:       20, 
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 1024 },
+                // Diese Optionen zwingen den Renderer, immer bei Position 0x0 mit der Erfassung zu starten
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generate & Download direkt aus dem HTML-String
-            html2pdf().set(opt).from(htmlContent).save();
+            // Generate & Download direkt aus dem eingefügten, strikt skalierten DOM-Element.
+            // Danach wird das temporäre Element wieder gelöscht.
+            html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                document.body.removeChild(pdfContainer);
+            });
         }
     </script>
 </body>
