@@ -10,6 +10,14 @@
     <!-- PURE jsPDF Library (Ersetzt html2pdf für ausfallsicheres Vektor-PDF Rendering) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <!-- EmailJS Library für den sicheren E-Mail-Versand -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("y0ANsvoTYHNRXCf5R");
+        })();
+    </script>
+    
     <!-- Fonts: Montserrat (Headings) & Open Sans (Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -389,7 +397,15 @@
                                     </div>
                                 </div>
 
-                                <div class="pt-6">
+                                <!-- Neue Checkbox für Datenschutz (optional aber empfohlen bei E-Mail Versand) -->
+                                <div class="pt-2">
+                                    <label class="flex items-start gap-3 text-xs text-slate-500 cursor-pointer">
+                                        <input type="checkbox" required class="mt-0.5 border-gray-300 rounded text-cs-blue focus:ring-cs-blue">
+                                        <span>Ich stimme zu, dass meine Daten zur Erstellung des Angebots verarbeitet und eine Kopie an den cardioscan Vertrieb gesendet wird.</span>
+                                    </label>
+                                </div>
+
+                                <div class="pt-4">
                                     <button type="submit" id="submit-btn" class="w-full bg-cs-navy text-white font-bold py-5 rounded-lg text-sm hover:bg-cs-blue transition-all shadow-xl hover:shadow-glow hover:-translate-y-1 flex justify-center items-center gap-3">
                                         <span>Angebot herunterladen</span>
                                         <i class="fa-solid fa-download"></i>
@@ -665,62 +681,42 @@
             setTimeout(() => adjustContainerHeight('calculator'), 50);
         }
 
-        // HILFSFUNKTION: Extrem robuster Logo-Loader für GitHub Pages
         function getBase64Logo() {
             return new Promise((resolve) => {
-                const img = new Image();
-                // WICHTIG: Kein crossOrigin-Attribut setzen! Das umgeht die strenge CORS-Prüfung auf GitHub Pages 
-                // für Dateien, die ohnehin im selben Repository liegen.
-                img.onload = () => {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        resolve({ data: canvas.toDataURL('image/png'), w: img.width, h: img.height });
-                    } catch (e) {
-                        // Fallback, falls Canvas blockiert wird
-                        fallbackFetchLoader(resolve);
-                    }
-                };
-                img.onerror = () => {
-                    // Zweiter Fallback, falls der direkte Image-Load fehlschlägt
-                    fallbackFetchLoader(resolve);
-                };
-                // Ein lokaler Parameter erzwingt, dass GitHub keine hartnäckige Cache-Version lädt
-                img.src = 'cardioscan_logo.png?' + new Date().getTime();
+                fetch('cardioscan_logo.png')
+                    .then(response => {
+                        if (!response.ok) throw new Error("Logo nicht gefunden");
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const img = new Image();
+                            img.onload = () => {
+                                resolve({ data: reader.result, w: img.width, h: img.height });
+                            };
+                            img.src = reader.result;
+                        };
+                        reader.readAsDataURL(blob);
+                    })
+                    .catch(err => {
+                        console.warn("Logo konnte nicht geladen werden, Text-Fallback wird genutzt.", err);
+                        resolve(null);
+                    });
             });
         }
 
-        function fallbackFetchLoader(resolve) {
-            fetch('cardioscan_logo.png')
-                .then(r => r.blob())
-                .then(blob => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        const img = new Image();
-                        img.onload = () => resolve({ data: reader.result, w: img.width, h: img.height });
-                        img.src = reader.result;
-                    };
-                    reader.readAsDataURL(blob);
-                })
-                .catch(() => resolve(null));
-        }
-
-        // --- PURE jsPDF GENERATOR (Komplett neu aufgebaut - 100% ausfallsicher) ---
+        // --- PURE jsPDF GENERATOR & EMAILJS INTEGRATION ---
         async function downloadOfferPDF() {
             const btn = document.getElementById('submit-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span>PDF wird erstellt...</span> <i class="fa-solid fa-spinner fa-spin"></i>';
+            btn.innerHTML = '<span>PDF wird erstellt & gesendet...</span> <i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
             try {
-                // Initialisiere jsPDF direkt in DIN A4, Einheit Millimeter
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-                // 1. Alle Daten aus dem UI auslesen
                 const art = document.getElementById('form-finanzierungsart').value;
                 const anrede = document.getElementById('form-anrede').value;
                 const vorname = document.getElementById('form-vorname').value;
@@ -743,10 +739,8 @@
                 let leasingfaktorVal = document.getElementById('summary-leasing-factor').textContent.trim();
                 const rateVal = document.getElementById('summary-rate').textContent.replace('€', '').trim();
 
-                // 2. Logo einfügen
                 const logo = await getBase64Logo();
                 if (logo && logo.data) {
-                    // Skalierung berechnen (max breite 50mm, max höhe 15mm)
                     const maxW = 50; const maxH = 15;
                     let imgW = maxW;
                     let imgH = (logo.h * maxW) / logo.w;
@@ -756,33 +750,27 @@
                     }
                     doc.addImage(logo.data, 'PNG', 190 - imgW, 20, imgW, imgH); 
                 } else {
-                    // Notfall-Fallback, falls Bildpfad fehlerhaft ist
                     doc.setFontSize(16); doc.setFont("helvetica", "bold");
                     doc.setTextColor(44, 98, 242);
                     doc.text("cardioscan", 190, 25, { align: "right" });
                     doc.setTextColor(0, 0, 0); 
                 }
 
-                // 3. Adressblock (Oben links, 20mm Rand)
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
                 doc.text([firma, `${anrede} ${vorname} ${nachname}`, strasse, `${plz} ${ort}`], 20, 45);
 
-                // 4. Datum (Rechtsbündig am 190mm Rand)
                 doc.text(`Hamburg, ${datum}`, 190, 60, { align: "right" });
 
-                // 5. Betreff / Finanzierungsart
                 doc.setFontSize(11);
                 doc.setFont("helvetica", "bold");
                 doc.text(`Finanzierungsangebot: ${art}`, 20, 80);
 
-                // 6. Anschreiben Intro
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
                 doc.text(salutation, 20, 95);
                 doc.text("vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:", 20, 105);
 
-                // 7. Übersichtstabelle zeichnen (Manuell, präzise eingerückt)
                 let y = 120;
                 const rowH = 7;
                 const drawRow = (label, val, unit) => {
@@ -803,7 +791,6 @@
                 drawRow("Rate in %:", hasPercent ? leasingfaktorVal.replace('%','').trim() : leasingfaktorVal, "%");
                 drawRow("kalk. Restwert:", restwertEuroVal, "€");
 
-                // 8. Zusätzliche Hinweise / Footer Text
                 y += 10;
                 if (art === "Mietkauf") {
                     doc.setFont("helvetica", "bold");
@@ -824,29 +811,51 @@
                 doc.setFont("helvetica", "bold");
                 doc.text("cardioscan GmbH", 20, y);
 
-                // 9. Fußzeile (Mit grauem Trennstrich unten fest verankert bei y=270)
                 doc.setDrawColor(150, 150, 150);
                 doc.setLineWidth(0.2);
                 doc.line(20, 270, 190, 270);
 
-                // Schriftgröße sehr klein (5.5) gewählt für maximalen Freiraum zwischen den Spalten
                 doc.setFontSize(5.5);
                 doc.setFont("helvetica", "normal");
 
-                // Absolut fehlerfreie Positionierung durch großzügigen mathematischen Abstand der X-Koordinaten
                 doc.text(["cardioscan GmbH", "Theodorstraße 41", "22761 Hamburg"], 20, 274);
                 doc.text(["Geschäftsführer Dr. Marc Weitl", "Amtsgericht Hamburg HRB 117288", "Ust-IdNr. DE268167789"], 46, 274);
                 doc.text(["Fon (+49) 40-303 723 30", "info@cardioscan.de", "www.cardioscan.de"], 86, 274);
                 
-                // Bankdaten extrem präzise ausgerichtet
                 doc.text(["Sydbank", "Commerzbank"], 118, 274);
                 doc.text(["IBAN DE55 2151 0800 1000 6859 59", "IBAN DE33 2004 0000 0630 1527 00"], 136, 274);
-                // BICs am rechten Rand bündig (190mm)
                 doc.text(["SYBKDE22", "COBADEFFXXX"], 190, 274, { align: "right" });
 
-                // 10. Speichern und Herunterladen
                 const firmaClean = firma.replace(/[^a-zA-Z0-9]/g, '_');
-                doc.save(`cardioscan_${art}_${firmaClean}.pdf`);
+                const filename = `cardioscan_${art}_${firmaClean}.pdf`;
+                
+                // 1. PDF DOWNLOAD STARTEN (Kunde lädt das PDF lokal herunter)
+                doc.save(filename);
+
+                // 2. EMAILJS PARAMETER VORBEREITEN (OHNE ANHANG, ALLE DATEN ALS TEXT)
+                const templateParams = {
+                    firma_name: firma,
+                    kontakt_name: `${anrede} ${vorname} ${nachname}`,
+                    adresse: strasse,
+                    plz_ort: `${plz} ${ort}`,
+                    finanzierungsart: art,
+                    anschaffungspreis: preisVal,
+                    laufzeit: laufzeitVal,
+                    rate: rateVal,
+                    leasingfaktor: leasingfaktorVal,
+                    restwert: restwertEuroVal
+                };
+
+                // 3. E-MAIL ABSENDEN (Du musst SERVICE_ID und TEMPLATE_ID noch anpassen)
+                // WICHTIG: Ersetze "DEINE_SERVICE_ID" und "DEINE_TEMPLATE_ID" mit deinen echten IDs von EmailJS
+                try {
+                    await emailjs.send("service_xyz123", "template_abc890", templateParams);
+                    console.log("E-Mail Alert erfolgreich versendet.");
+                    // Optional: Erfolgsmeldung für den User anzeigen
+                } catch (emailError) {
+                    console.error("Fehler beim E-Mail Versand:", emailError);
+                    // Wir werfen hier keinen Fehler, damit der User zumindest seine PDF trotzdem bekommt
+                }
 
             } catch (error) {
                 console.error("Fehler bei der PDF Generierung:", error);
