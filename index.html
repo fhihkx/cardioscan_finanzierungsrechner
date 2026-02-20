@@ -759,36 +759,23 @@
             const datum = ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear();
             const stadt = "Hamburg";
 
-            // Get Calculator Values (Reine Zahlen extrahieren für saubere Ausrichtung)
-            const preisVal = document.getElementById('summary-price').innerText.replace(/[^\d.,]/g, '').trim();
-            const laufzeitVal = document.getElementById('summary-duration').innerText.replace(/[^\d.,]/g, '').trim();
-            const restwertEuroVal = document.getElementById('summary-residual-euro').innerText.replace(/[^\d.,]/g, '').trim();
-            const leasingfaktorVal = document.getElementById('summary-leasing-factor').innerText.replace(/[^\d.,]/g, '').trim();
-            const rateVal = document.getElementById('summary-rate').innerText.replace(/[^\d.,]/g, '').trim();
+            // Get Calculator Values (.textContent verhindert Lesefehler von DOM Styles)
+            const preisVal = document.getElementById('summary-price').textContent.replace(/[^\d.,]/g, '').trim();
+            const laufzeitVal = document.getElementById('summary-duration').textContent.replace(/[^\d.,]/g, '').trim();
+            const restwertEuroVal = document.getElementById('summary-residual-euro').textContent.replace(/[^\d.,]/g, '').trim();
+            const leasingfaktorVal = document.getElementById('summary-leasing-factor').textContent.replace(/[^\d.,]/g, '').trim();
+            const rateVal = document.getElementById('summary-rate').textContent.replace(/[^\d.,]/g, '').trim();
 
             // Specific Note based on Template logic (Mietkauf bold)
             const extraHinweis = (art === "Leasing")
                 ? "Die oben genannten Preise verstehen sich netto, zuzüglich der gesetzlichen Mehrwertsteuer."
                 : "<strong>Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.</strong>";
 
-            // Um absolute Sicherheit gegen jegliches Abschneiden (Clipping) der Render-Engine zu gewährleisten,
-            // fügen wir das HTML-Dokument kurz in den DOM ein. Wir definieren EXAKTE mm-Angaben für ein A4 Blatt.
-            const pdfContainer = document.createElement('div');
-            
-            // 170mm Breite entspricht genau 210mm (A4) - 2x 20mm (Ränder links/rechts). 
-            // 257mm Höhe entspricht genau 297mm (A4) - 2x 20mm (Ränder oben/unten).
-            pdfContainer.style.position = 'absolute';
-            pdfContainer.style.top = '0';
-            pdfContainer.style.left = '0';
-            pdfContainer.style.width = '170mm'; 
-            pdfContainer.style.height = '257mm'; 
-            pdfContainer.style.padding = '0';
-            pdfContainer.style.margin = '0';
-            pdfContainer.style.backgroundColor = '#fff';
-            pdfContainer.style.zIndex = '-9999';
-
-            pdfContainer.innerHTML = `
-                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 100%; height: 100%; position: relative; box-sizing: border-box;">
+            // HTML-String für das PDF aufbauen.
+            // Der String wird DIREKT an html2pdf übergeben, ohne ihn ans DOM zu hängen.
+            // Die strikten 170mm (DIN A4 Breite - Ränder) verhindern jedes Clipping.
+            const htmlContent = `
+                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 170mm; min-height: 257mm; position: relative; box-sizing: border-box; background: #fff; margin: 0; padding: 0;">
                     
                     <!-- Header mit Logo (rechtsbündig) -->
                     <table style="width: 100%; border: none; margin-bottom: 12mm; border-collapse: collapse;">
@@ -865,7 +852,7 @@
                     <p style="margin-top: 0; margin-bottom: 5mm;">Mit freundlichen Grüßen,</p>
                     <p style="margin-top: 0;"><strong>cardioscan GmbH</strong></p>
 
-                    <!-- Footer (Passgenau unten fixiert, exakt 1:1 aufgebaut wie im Screenshot) -->
+                    <!-- Footer (Passgenau unten fixiert) -->
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; border-top: 1px solid #999; padding-top: 3mm;">
                         <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.2; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
                             <tr>
@@ -904,8 +891,6 @@
                 </div>
             `;
 
-            document.body.appendChild(pdfContainer);
-
             // Setup PDF Download Name
             const firmaClean = firma.replace(/[^a-zA-Z0-9]/g, '_');
             const filename = `cardioscan_${art}_${firmaClean}.pdf`;
@@ -915,16 +900,12 @@
                 margin:       20, 
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                // Diese Optionen zwingen den Renderer, immer bei Position 0x0 mit der Erfassung zu starten
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
+                html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generate & Download direkt aus dem eingefügten, strikt skalierten DOM-Element.
-            // Danach wird das temporäre Element wieder gelöscht.
-            html2pdf().set(opt).from(pdfContainer).save().then(() => {
-                document.body.removeChild(pdfContainer);
-            });
+            // String direkt konvertieren (löscht alle Scroll-Fehler aus der Render-Engine!)
+            html2pdf().set(opt).from(htmlContent).save();
         }
     </script>
 </body>
