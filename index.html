@@ -193,7 +193,7 @@
         <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
             <!-- Logo -->
             <a href="https://cardioscan.de" target="_blank" class="flex items-center group shrink-0">
-                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-12 md:h-16 lg:h-20 object-contain group-hover:opacity-80 transition-opacity">
+                <img src="cardioscan_logo.png" alt="cardioscan Logo" class="h-8 md:h-12 object-contain group-hover:opacity-80 transition-opacity">
             </a>
 
             <!-- Actions -->
@@ -771,17 +771,24 @@
                 ? "Die oben genannten Preise verstehen sich netto, zuzüglich der gesetzlichen Mehrwertsteuer."
                 : "<strong>Hinweis: Die gesetzl. Mehrwertsteuer fällt vorab auf die Summe aller Zahlungen an.</strong>";
 
-            // HTML-String für das PDF aufbauen.
-            // Der String wird DIREKT an html2pdf übergeben, ohne ihn ans DOM zu hängen.
-            // Die strikten 170mm (DIN A4 Breite - Ränder) verhindern jedes Clipping.
+            // Wrapper für garantierte Clipping-Vermeidung
+            // Position: fixed ignoriert jegliches Scrollen des Browsers!
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.top = '0';
+            wrapper.style.left = '0';
+            wrapper.style.width = '170mm'; // Exakte Breite innerhalb der A4-Ränder (210mm - 40mm)
+            wrapper.style.zIndex = '-9999';
+            wrapper.style.backgroundColor = '#fff';
+
             const htmlContent = `
-                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 170mm; min-height: 257mm; position: relative; box-sizing: border-box; background: #fff; margin: 0; padding: 0;">
+                <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; line-height: 1.5; width: 100%; min-height: 257mm; position: relative; box-sizing: border-box; background: #fff; margin: 0; padding: 0;">
                     
                     <!-- Header mit Logo (rechtsbündig) -->
                     <table style="width: 100%; border: none; margin-bottom: 12mm; border-collapse: collapse;">
                         <tr>
                             <td style="text-align: right; padding: 0;">
-                                <img src="cardioscan_logo.png" style="height: 55px; max-width: 250px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
+                                <img src="cardioscan_logo.png" style="height: 45px; max-width: 250px; object-fit: contain; display: inline-block;" alt="cardioscan Logo">
                             </td>
                         </tr>
                     </table>
@@ -810,37 +817,37 @@
                     <p style="margin-top: 0; margin-bottom: 5mm;">${salutation}</p>
                     <p style="margin-top: 0; margin-bottom: 12mm;">vielen Dank für das entgegengebrachte Vertrauen! Wie folgt bieten wir Ihnen unverbindlich an:</p>
                     
-                    <!-- Values (Zentrierte Tabelle für exaktes Alignment der Zahlen und Währungen) -->
+                    <!-- Values (Zentriert, kompakt & ohne Überschneidungen) -->
                     <table style="margin: 0 auto; width: 85mm; border-collapse: collapse; font-size: 11pt;">
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Anschaffungspreis:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${preisVal}</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${preisVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">€</td>
                         </tr>
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Laufzeit:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${laufzeitVal}</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">Monate</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${laufzeitVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">Monate</td>
                         </tr>
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Mietsonderzahlung:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>0,00</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>0,00</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">€</td>
                         </tr>
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Monatliche Rate:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${rateVal}</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${rateVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">€</td>
                         </tr>
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">Rate in %:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${leasingfaktorVal}</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">%</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${leasingfaktorVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">%</td>
                         </tr>
                         <tr>
                             <td style="padding: 1.5mm 0; text-align: left;">kalk. Restwert:</td>
-                            <td style="padding: 1.5mm 0; text-align: right;"><strong>${restwertEuroVal}</strong></td>
-                            <td style="padding: 1.5mm 0 1.5mm 5mm; width: 15mm; text-align: left;">€</td>
+                            <td style="padding: 1.5mm 0; text-align: right; white-space: nowrap;"><strong>${restwertEuroVal}</strong></td>
+                            <td style="padding: 1.5mm 0 1.5mm 4mm; width: 12mm; text-align: left;">€</td>
                         </tr>
                     </table>
 
@@ -852,44 +859,34 @@
                     <p style="margin-top: 0; margin-bottom: 5mm;">Mit freundlichen Grüßen,</p>
                     <p style="margin-top: 0;"><strong>cardioscan GmbH</strong></p>
 
-                    <!-- Footer (Passgenau unten fixiert) -->
+                    <!-- Footer (Passgenau in exakt 2 Zeilen) -->
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; border-top: 1px solid #999; padding-top: 3mm;">
-                        <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.2; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
+                        <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.3; border-collapse: collapse; border: none; font-family: Arial, sans-serif;">
                             <tr>
-                                <td style="vertical-align: top; width: 18%; padding: 0;">
+                                <td style="vertical-align: top; width: 15%; padding: 0;">
                                     cardioscan GmbH<br>
-                                    Theodorstraße 41r<br>
-                                    22761 Hamburg
+                                    Theodorstr. 41r, 22761 HH
                                 </td>
-                                <td style="vertical-align: top; width: 26%; padding: 0;">
+                                <td style="vertical-align: top; width: 28%; padding: 0;">
                                     Geschäftsführer Dr. Marc Weitl<br>
-                                    Amtsgericht Hamburg HRB 117288<br>
-                                    Ust-IdNr. DE268167789
+                                    Amtsgericht HH HRB 117288, Ust-IdNr. DE268167789
                                 </td>
-                                <td style="vertical-align: top; width: 22%; padding: 0;">
+                                <td style="vertical-align: top; width: 20%; padding: 0;">
                                     Fon (+49) 40-303 723 30<br>
-                                    info@cardioscan.de<br>
-                                    www.cardioscan.de
+                                    info@cardioscan.de, www.cardioscan.de
                                 </td>
-                                <td style="vertical-align: top; width: 34%; padding: 0;">
-                                    <table style="width: 100%; font-size: 6.5pt; color: #333; line-height: 1.2; border-collapse: collapse; border: none;">
-                                        <tr>
-                                            <td style="padding: 0 1.5mm 0 0;">Sydbank</td>
-                                            <td style="padding: 0 1.5mm 0 0;">IBAN DE55 2151 0600 1000 6859 59</td>
-                                            <td style="padding: 0;">SYBKDE22</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 0 1.5mm 0 0;">Commerzbank</td>
-                                            <td style="padding: 0 1.5mm 0 0;">IBAN DE33 2004 0000 0630 1527 00</td>
-                                            <td style="padding: 0;">COBADEFFXXX</td>
-                                        </tr>
-                                    </table>
+                                <td style="vertical-align: top; width: 37%; padding: 0;">
+                                    Sydbank IBAN DE55 2151 0600 1000 6859 59 SYBKDE22<br>
+                                    Commerzbank IBAN DE33 2004 0000 0630 1527 00 COBADEFFXXX
                                 </td>
                             </tr>
                         </table>
                     </div>
                 </div>
             `;
+
+            wrapper.innerHTML = htmlContent;
+            document.body.appendChild(wrapper);
 
             // Setup PDF Download Name
             const firmaClean = firma.replace(/[^a-zA-Z0-9]/g, '_');
@@ -900,12 +897,15 @@
                 margin:       20, 
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true },
+                // windowWidth: 1024 kombiniert mit wrapper fixed pos verhindert clipping endgültig!
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1024 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // String direkt konvertieren (löscht alle Scroll-Fehler aus der Render-Engine!)
-            html2pdf().set(opt).from(htmlContent).save();
+            // Generate & Download direkt aus dem temporären wrapper.
+            html2pdf().set(opt).from(wrapper).save().then(() => {
+                document.body.removeChild(wrapper); // Sauberer Code: Löscht das versteckte Element wieder
+            });
         }
     </script>
 </body>
